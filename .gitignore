@@ -1,0 +1,16 @@
+.codex
+.DS_Store
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.venv/
+.vite/
+backend/.venv/
+backend/__pycache__/
+backend/app/__pycache__/
+backend/*.db
+frontend/node_modules/
+frontend/dist/
+nft-monitor/
