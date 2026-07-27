@@ -79,7 +79,7 @@ export function Chart({ points, selectedChain, search }: ChartProps): JSX.Elemen
         <LineChart data={chartData}>
           <CartesianGrid stroke="rgba(148, 163, 184, 0.16)" strokeDasharray="3 3" />
           <XAxis dataKey="timestamp" minTickGap={24} stroke="#94a3b8" />
-          <YAxis stroke="#94a3b8" />
+          <YAxis stroke="#94a3b8" width={80} />
           <Tooltip
             contentStyle={{
               background: "#020617",
