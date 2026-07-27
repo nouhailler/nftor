@@ -12,10 +12,16 @@
 
 - Le dépôt local a été initialisé puis poussé sur GitHub.
 - Le projet applicatif existe à la racine du dépôt.
-- Le `README.md` a été créé et adapté à la structure réelle du dépôt.
+- Le `README.md` a été créé, adapté à la structure réelle du dépôt, puis enrichi
+  de captures d’écran et d’une mise en forme plus lisible.
 - Le fichier `AGENTS.md` décrit l’architecture et les conventions de modification.
-- Le commit actuellement poussé est:
+- Le dépôt GitHub a été renommé `nouhailler/Nftor` → `nouhailler/nftor`.
+  Le remote local pointe désormais sur `https://github.com/nouhailler/nftor.git`.
+- Les commits actuellement poussés sur `main` sont:
   - `2e55183` `Add nft-monitor application`
+  - `85b2fc4` `Add project context file`
+  - `b7caf45` `Fix clipped Y-axis labels in throughput chart`
+  - `27cf35b` `Add dashboard screenshots and restyle README`
 
 ## Structure actuelle
 
@@ -48,6 +54,14 @@
 │       │   └── useWebSocket.ts
 │       └── store/
 │           └── useStore.ts
+├── docs/
+│   └── screenshots/
+│       ├── dashboard.png
+│       ├── stat-cards.png
+│       ├── chart.png
+│       ├── filters.png
+│       ├── live-chains.png
+│       └── mobile.png
 ├── .gitignore
 ├── README.md
 ├── AGENTS.md
@@ -95,6 +109,25 @@
 - Limitation mémoire:
   - maximum `120` points côté frontend
 - Désactivation des animations du graphe
+- `YAxis` du graphe forcé à `width={80}`:
+  - la largeur par défaut de Recharts (60px) tronquait les libellés de débit
+    élevés (`1800000` affiché `800000`)
+
+### Documentation
+
+- Six captures d’écran dans `docs/screenshots/`, référencées par le `README.md`:
+  - `dashboard.png` — vue complète, viewport 1440px
+  - `stat-cards.png` — cartes `input/output/forward`
+  - `chart.png` — graphe temps réel
+  - `filters.png` — filtre chaîne appliqué sur `input`
+  - `live-chains.png` — tableau `Live Chains`
+  - `mobile.png` — rendu 414px
+- Images redimensionnées et palettisées: 4,3 Mo → 1,3 Mo au total.
+- `README.md` restructuré: badges, sections avec icônes, tableaux de référence
+  (prérequis, routes REST, variables d’environnement), diagramme Mermaid
+  d’architecture, blocs `<details>` repliables pour Docker et les permissions
+  `nft`. Le contenu technique d’origine est conservé et `GET /health`, qui
+  manquait, y est désormais documenté.
 
 ## Contrats de données importants
 
@@ -156,6 +189,26 @@
 - Compilation Python effectuée avec:
   - `python3 -m compileall backend`
 - Le projet a été commit puis poussé avec succès sur GitHub.
+- L’application a été lancée de bout en bout au moins une fois:
+  - `uvicorn main:app` + `npm run dev`
+  - `GET /health` et `GET /api/history` répondent `200`
+  - le WebSocket alimente bien le dashboard en continu
+  - captures d’écran produites depuis cette exécution via Playwright
+
+## Reproduire les captures d’écran
+
+Le poste de développement n’avait pas accès aux vrais compteurs (`nft` absent du
+`PATH`, `sudo` exigeant un mot de passe). Les captures ont donc été prises avec
+une source `nft` factice placée en tête de `PATH`, qui émet un ruleset JSON
+valide dont les compteurs croissent avec le temps.
+
+- Seule la source kernel est simulée: le backend, le parsing, le calcul des
+  deltas, SQLite et le WebSocket sont bien les vrais.
+- Le `README.md` signale ce point dans un encadré `> [!NOTE]`.
+- Sur une machine avec `nft` réellement accessible, un simple
+  `uvicorn main:app` + `npm run dev` suffit, sans stub.
+- Le stub et le script Playwright n’ont pas été versionnés; ils sont à recréer
+  si les captures doivent être refaites.
 
 ## Points d’attention pour la reprise
 
