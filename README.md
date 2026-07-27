@@ -1,28 +1,109 @@
-# nft-monitor
+<div align="center">
 
-Real-time nftables monitoring with a FastAPI backend, SQLite history storage, and a React dashboard powered by WebSocket streaming.
+# 🛡️ nft-monitor
 
-## Features
+**Real-time `nftables` telemetry — FastAPI backend, SQLite history, React dashboard over WebSocket.**
 
-- Async nftables polling via `nft -j list ruleset`
-- PPS and BPS rate calculation per chain
-- SQLite history retention with batched writes
-- REST history endpoint and live WebSocket stream
-- React dashboard with Recharts, Zustand, filters, and reconnecting WebSocket client
+[![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+[![SQLite](https://img.shields.io/badge/SQLite-WAL-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org/)
 
-## Repository Layout
+</div>
+
+---
+
+## 📸 Screenshots
+
+### Dashboard
+
+Live counters, throughput chart, and per-chain detail in a single view.
+
+![nft-monitor dashboard](docs/screenshots/dashboard.png)
+
+### ⚡ Headline stats
+
+Per-chain rate, packet count, and byte count for `input`, `output`, and `forward`.
+
+![Headline stat cards](docs/screenshots/stat-cards.png)
+
+### 📈 Realtime throughput
+
+Bytes per second per base chain, streamed over WebSocket with animations disabled for smooth updates.
+
+![Realtime throughput chart](docs/screenshots/chart.png)
+
+### 🔍 Filtering
+
+Narrow the view to a single chain, or search chain names — the chart and the table follow the filter.
+
+![Chain filter applied](docs/screenshots/filters.png)
+
+### 📋 Live chains
+
+![Live chains table](docs/screenshots/live-chains.png)
+
+### 📱 Responsive layout
+
+<div align="center">
+  <img src="docs/screenshots/mobile.png" alt="Mobile layout" width="320">
+</div>
+
+> [!NOTE]
+> Screenshots were captured against a synthetic ruleset so the counters show sustained traffic.
+> The backend, parsing, delta computation, storage, and streaming are the real ones.
+
+---
+
+## ✨ Features
+
+| | Feature |
+|:---:|---|
+| 🔄 | Async `nft -j list ruleset` polling, no `shell=True` |
+| 📊 | PPS and BPS rate calculation per chain |
+| 💾 | SQLite history retention with WAL mode and batched writes |
+| 🔌 | Live WebSocket stream with auto-reconnect on the client |
+| 🕘 | REST history endpoint for backfilling the chart on load |
+| 🎛️ | Chain filter, text search, and reset in the dashboard |
+| 🛟 | `nft` errors are streamed as error snapshots instead of crashing the backend |
+| 🔐 | Runs unprivileged via `CAP_NET_ADMIN` or a scoped `sudo` rule |
+
+---
+
+## 🧭 Architecture
+
+```mermaid
+flowchart LR
+    NFT["🐧 nftables<br/>nft -j list ruleset"]
+    MON["🔄 NftMonitorService<br/>poll · parse · deltas"]
+    DB[("💾 SQLite<br/>WAL · batched")]
+    WS["🔌 ConnectionManager<br/>/ws/nft"]
+    UI["⚛️ React dashboard<br/>Zustand · Recharts"]
+
+    NFT -->|JSON ruleset| MON
+    MON -->|snapshots| DB
+    MON -->|broadcast| WS
+    WS -->|live stream| UI
+    DB -->|GET /api/history| UI
+```
+
+---
+
+## 📁 Repository Layout
 
 ```text
 .
 ├── backend/
-│   ├── main.py
+│   ├── main.py                 # FastAPI app, REST + WebSocket routes
 │   ├── requirements.txt
 │   ├── app/
-│   │   ├── monitor.py
-│   │   ├── database.py
-│   │   ├── models.py
-│   │   ├── websocket.py
-│   │   └── utils.py
+│   │   ├── monitor.py          # polling loop, delta and rate computation
+│   │   ├── database.py         # SQLite history, WAL, batched writes
+│   │   ├── models.py           # pydantic contracts
+│   │   ├── websocket.py        # connection manager and broadcast
+│   │   └── utils.py            # nft execution and ruleset parsing
 │   └── Dockerfile
 ├── frontend/
 │   ├── index.html
@@ -40,20 +121,28 @@ Real-time nftables monitoring with a FastAPI backend, SQLite history storage, an
 │       │   └── useWebSocket.ts
 │       └── store/
 │           └── useStore.ts
+├── docs/screenshots/
 ├── README.md
-└── AGENTS.md
+├── AGENTS.md
+└── CONTEXT.md
 ```
 
-## Requirements
+---
 
-- Python 3.11+
-- Node.js 20+
-- `nft` available on the host
-- nftables counters enabled in rules
+## ✅ Requirements
 
-## Installation
+| Requirement | Version / Note |
+|---|---|
+| 🐍 Python | 3.11+ |
+| 🟢 Node.js | 20+ |
+| 🐧 `nft` | available on the host |
+| 🔢 Counters | nftables rules must have counters enabled |
 
-### Backend
+---
+
+## 🚀 Installation
+
+### 🐍 Backend
 
 ```bash
 cd backend
@@ -62,43 +151,43 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### Frontend
+### ⚛️ Frontend
 
 ```bash
 cd frontend
 npm install
 ```
 
-## Development Mode
+---
 
-### Run backend
+## 🛠️ Development Mode
+
+**Backend** — listens on `http://localhost:8000`
 
 ```bash
 cd backend
 uvicorn main:app --reload
 ```
 
-The backend listens on `http://localhost:8000`.
-
-### Run frontend
+**Frontend** — listens on `http://localhost:5173`
 
 ```bash
 cd frontend
 npm run dev
 ```
 
-The frontend listens on `http://localhost:5173`.
+---
 
-## Production Mode
+## 📦 Production Mode
 
-### Backend
+**Backend**
 
 ```bash
 cd backend
 uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
-### Frontend
+**Frontend**
 
 ```bash
 cd frontend
@@ -106,7 +195,8 @@ npm run build
 npm run preview -- --host 0.0.0.0 --port 4173
 ```
 
-### Backend Docker image
+<details>
+<summary>🐳 <b>Backend Docker image</b></summary>
 
 ```bash
 cd backend
@@ -114,18 +204,28 @@ docker build -t nft-monitor-backend .
 docker run --rm -p 8000:8000 --cap-add=NET_ADMIN nft-monitor-backend
 ```
 
-## nft Permissions Setup
+</details>
 
-The application does not require running the Python process as root. It first tries direct access to `nft`, then falls back to `sudo -n nft`.
+---
 
-### Option 1: grant capability to `nft`
+## 🔐 nft Permissions Setup
+
+> [!IMPORTANT]
+> The application does **not** require running the Python process as root.
+> It first tries direct access to `nft`, then falls back to `sudo -n nft`.
+
+<details open>
+<summary><b>Option 1 — grant capability to <code>nft</code></b></summary>
 
 ```bash
 sudo setcap cap_net_admin+ep "$(command -v nft)"
 getcap "$(command -v nft)"
 ```
 
-### Option 2: allow passwordless sudo for nft only
+</details>
+
+<details>
+<summary><b>Option 2 — passwordless sudo, scoped to <code>nft</code> only</b></summary>
 
 Create a sudoers drop-in:
 
@@ -141,13 +241,21 @@ your-user ALL=(root) NOPASSWD: /usr/sbin/nft
 
 Adjust the path if `command -v nft` returns a different location.
 
-## API
+</details>
+
+---
+
+## 🔌 API
 
 ### WebSocket
 
-- Endpoint: `ws://localhost:8000/ws/nft`
-- Future auth placeholder: `?token=...`
-- Message shape:
+| | |
+|---|---|
+| **Endpoint** | `ws://localhost:8000/ws/nft` |
+| **Auth** | future placeholder — `?token=...` |
+
+<details open>
+<summary>📨 <b>Message shape</b></summary>
 
 ```json
 {
@@ -168,24 +276,30 @@ Adjust the path if `command -v nft` returns a different location.
 }
 ```
 
+</details>
+
 ### REST
 
-- `GET /api/history?hours=1`
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/health` | Liveness probe |
+| `GET` | `/api/history?hours=1` | Stored snapshots, `hours` between 1 and 168 |
 
-## Environment Variables
+---
+
+## ⚙️ Environment Variables
 
 ### Frontend
 
-- `VITE_API_BASE_URL`
-- `VITE_WS_URL`
-- `VITE_WS_TOKEN`
+| Variable | Default |
+|---|---|
+| `VITE_API_BASE_URL` | `http://localhost:8000` |
+| `VITE_WS_URL` | `ws://localhost:8000/ws/nft` |
+| `VITE_WS_TOKEN` | _(unset)_ |
 
-Defaults:
+---
 
-- API: `http://localhost:8000`
-- WS: `ws://localhost:8000/ws/nft`
-
-## Example Traffic Generation
+## 🧪 Example Traffic Generation
 
 Generate ingress/egress activity to produce visible counter changes:
 
@@ -205,8 +319,11 @@ iperf3 -c <server> -t 30
 ab -n 1000 -c 20 http://127.0.0.1/
 ```
 
-## Notes
+---
 
-- The dashboard keeps the most recent 120 points in memory.
-- Base-chain visibility depends on chain names in your ruleset. The UI is optimized for `input`, `output`, and `forward`.
-- The backend handles nft execution errors gracefully and streams error snapshots instead of crashing.
+## 📝 Notes
+
+- 🧠 The dashboard keeps the most recent **120 points** in memory.
+- 🔗 Base-chain visibility depends on chain names in your ruleset. The UI is optimized for `input`, `output`, and `forward`.
+- 🛟 The backend handles `nft` execution errors gracefully and streams error snapshots instead of crashing.
+- 🔤 Chain names are normalized to lowercase.
